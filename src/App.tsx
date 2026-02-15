@@ -38,6 +38,12 @@ function App() {
   const [filterCurrentOnly, setFilterCurrentOnly] = useState(false)
   const [modelType, setModelType] = useState('bigrams')
   const [isAnimating, setIsAnimating] = useState(false)
+  const [predictedNext, setPredictedNext] = useState<string | null>(null)
+  const [predictedContext, setPredictedContext] = useState<string | null>(null)
+  const [manualSelection, setManualSelection] = useState<{
+    context: string
+    next: string
+  } | null>(null)
   const intervalRef = useRef<number | null>(null)
 
   const seedTokens = useMemo(() => tokenize(normalizeText(seedText)), [seedText])
@@ -109,15 +115,85 @@ function App() {
     [temperature],
   )
 
+  const computePredictedNext = useCallback(() => {
+    if (model.isEmpty()) {
+      setPredictedNext(null)
+      setPredictedContext(null)
+      setManualSelection(null)
+      return
+    }
+    let context = currentToken
+    if (!context) {
+      context = model.getMostCommonToken()
+    }
+    if (!context) {
+      setPredictedNext(null)
+      setPredictedContext(null)
+      setManualSelection(null)
+      return
+    }
+    const resolved = model.resolveToken(context) ?? model.getMostCommonToken()
+    if (!resolved) {
+      setPredictedNext(null)
+      setPredictedContext(null)
+      setManualSelection(null)
+      return
+    }
+    if (manualSelection && manualSelection.context === resolved) {
+      setPredictedNext(manualSelection.next)
+      setPredictedContext(resolved)
+      return
+    }
+    if (manualSelection) {
+      setManualSelection(null)
+    }
+    const candidates = model.getCandidates(resolved)
+    if (candidates.length === 0) {
+      setPredictedNext(null)
+      setPredictedContext(null)
+      return
+    }
+    if (temperature <= 0) {
+      setPredictedNext(candidates[0].token)
+      setPredictedContext(resolved)
+      return
+    }
+    const adjusted = applyTemperature(
+      candidates.map((candidate) => ({ token: candidate.token, prob: candidate.prob })),
+      temperature,
+    )
+    const sampled = sampleCandidate(adjusted)
+    setPredictedNext(sampled ? sampled.token : null)
+    setPredictedContext(resolved)
+  }, [model, currentToken, temperature])
+
+  const handleBigramSelect = useCallback(
+    (prev: string, next: string) => {
+      setManualSelection({ context: prev, next })
+      setPredictedContext(prev)
+      setPredictedNext(next)
+    },
+    [],
+  )
+
   const generateOne = useCallback(() => {
     const activeModel = ensureModel()
     if (activeModel.isEmpty()) return
     setGeneratedTokens((prev) => {
-      const next = getNextToken([...seedTokens, ...prev], activeModel)
+      const baseTokens = [...seedTokens, ...prev]
+      const contextToken = baseTokens[baseTokens.length - 1]
+      const resolved = contextToken
+        ? activeModel.resolveToken(contextToken) ?? activeModel.getMostCommonToken()
+        : activeModel.getMostCommonToken()
+      const shouldUsePredicted =
+        predictedNext && predictedContext && resolved && predictedContext === resolved
+      const next = shouldUsePredicted
+        ? predictedNext
+        : getNextToken(baseTokens, activeModel)
       if (!next) return prev
       return [...prev, next]
     })
-  }, [ensureModel, getNextToken, seedTokens])
+  }, [ensureModel, getNextToken, predictedNext, predictedContext, seedTokens])
 
   const generateMany = useCallback(
     (amount: number) => {
@@ -184,6 +260,10 @@ function App() {
     return () => stopAnimation()
   }, [stopAnimation])
 
+  useEffect(() => {
+    computePredictedNext()
+  }, [computePredictedNext, seedText, generatedTokens, temperature, corpusText])
+
   const isCorpusTrained = lastTrainedCorpus === corpusText && !model.isEmpty()
 
   return (
@@ -225,8 +305,10 @@ function App() {
               <BigramList
                 bigrams={bigrams}
                 currentToken={resolvedToken ?? currentToken}
+                predictedNext={predictedNext}
                 filterCurrentOnly={filterCurrentOnly}
                 onToggleFilter={setFilterCurrentOnly}
+                onSelectBigram={handleBigramSelect}
               />
             )}
           </div>

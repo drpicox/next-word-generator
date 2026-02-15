@@ -47,6 +47,19 @@
   background: rgba(15, 123, 108, 0.12);
 }
 
+.winner {
+  border-color: rgba(199, 107, 46, 0.65);
+  background: rgba(199, 107, 46, 0.18);
+}
+
+.selectable {
+  cursor: pointer;
+}
+
+.selectable:hover {
+  border-color: rgba(15, 123, 108, 0.7);
+}
+
 .pair {
   display: flex;
   align-items: center;
