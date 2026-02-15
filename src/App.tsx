@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './App.module.css'
 import { BigramModel } from './models/BigramModel'
+import { TrigramModel } from './models/TrigramModel'
 import type { BigramEntry } from './models/BigramModel'
+import type { TrigramEntry } from './models/TrigramModel'
 import { normalizeText } from './utils/normalize'
 import { tokenize } from './utils/tokenize'
 import { tokensToText } from './utils/format'
 import { applyTemperature, sampleCandidate } from './utils/sample'
 import { CorpusTab } from './components/CorpusTab'
 import { BigramList } from './components/BigramList'
+import { TrigramList } from './components/TrigramList'
 import { GeneratorControls } from './components/GeneratorControls'
 import { GeneratedText } from './components/GeneratedText'
 
@@ -72,8 +75,10 @@ function App() {
   ])
   const [isLoadingCorpus, setIsLoadingCorpus] = useState(false)
   const [lastTrainedCorpus, setLastTrainedCorpus] = useState('')
-  const [model, setModel] = useState(() => new BigramModel())
+  const [bigramModel, setBigramModel] = useState(() => new BigramModel())
+  const [trigramModel, setTrigramModel] = useState(() => new TrigramModel())
   const [bigrams, setBigrams] = useState<BigramEntry[]>([])
+  const [trigrams, setTrigrams] = useState<TrigramEntry[]>([])
   const [seedText, setSeedText] = useState('')
   const [generatedTokens, setGeneratedTokens] = useState<string[]>([])
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE)
@@ -83,8 +88,17 @@ function App() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [predictedNext, setPredictedNext] = useState<string | null>(null)
   const [predictedContext, setPredictedContext] = useState<string | null>(null)
+  const [predictedTrigramContext, setPredictedTrigramContext] = useState<{
+    prev1: string
+    prev2: string
+  } | null>(null)
   const [manualSelection, setManualSelection] = useState<{
     context: string
+    next: string
+  } | null>(null)
+  const [manualTrigramSelection, setManualTrigramSelection] = useState<{
+    prev1: string
+    prev2: string
     next: string
   } | null>(null)
   const intervalRef = useRef<number | null>(null)
@@ -96,7 +110,11 @@ function App() {
   )
   const outputText = useMemo(() => tokensToText(outputTokens), [outputTokens])
   const currentToken = outputTokens.length > 0 ? outputTokens[outputTokens.length - 1] : null
-  const resolvedToken = currentToken ? model.resolveToken(currentToken) : null
+  const currentPrev2 = outputTokens.length > 0 ? outputTokens[outputTokens.length - 1] : null
+  const currentPrev1 = outputTokens.length > 1 ? outputTokens[outputTokens.length - 2] : null
+  const resolvedToken = currentToken ? bigramModel.resolveToken(currentToken) : null
+  const resolvedPrev1 = currentPrev1 ? trigramModel.resolveToken(currentPrev1) : null
+  const resolvedPrev2 = currentPrev2 ? trigramModel.resolveToken(currentPrev2) : null
 
   const stopAnimation = useCallback(() => {
     if (intervalRef.current) {
@@ -116,24 +134,34 @@ function App() {
   )
 
   const trainModel = useCallback(() => {
-    const trained = new BigramModel()
-    trained.train(corpusText)
-    setModel(trained)
-    setBigrams(trained.getAllBigrams())
+    const trainedBigram = new BigramModel()
+    const trainedTrigram = new TrigramModel()
+    trainedBigram.train(corpusText)
+    trainedTrigram.train(corpusText)
+    setBigramModel(trainedBigram)
+    setTrigramModel(trainedTrigram)
+    setBigrams(trainedBigram.getAllBigrams())
+    setTrigrams(trainedTrigram.getAllTrigrams())
     setLastTrainedCorpus(corpusText)
   }, [corpusText])
 
-  const ensureModel = useCallback(() => {
-    if (!model.isEmpty()) return model
-    const trained = new BigramModel()
-    trained.train(corpusText)
-    setModel(trained)
-    setBigrams(trained.getAllBigrams())
+  const ensureModels = useCallback(() => {
+    if (!bigramModel.isEmpty() && !trigramModel.isEmpty()) {
+      return { bigram: bigramModel, trigram: trigramModel }
+    }
+    const trainedBigram = new BigramModel()
+    const trainedTrigram = new TrigramModel()
+    trainedBigram.train(corpusText)
+    trainedTrigram.train(corpusText)
+    setBigramModel(trainedBigram)
+    setTrigramModel(trainedTrigram)
+    setBigrams(trainedBigram.getAllBigrams())
+    setTrigrams(trainedTrigram.getAllTrigrams())
     setLastTrainedCorpus(corpusText)
-    return trained
-  }, [model, corpusText])
+    return { bigram: trainedBigram, trigram: trainedTrigram }
+  }, [bigramModel, trigramModel, corpusText])
 
-  const getNextToken = useCallback(
+  const getNextTokenBigram = useCallback(
     (baseTokens: string[], activeModel: BigramModel): string | null => {
       let context = baseTokens[baseTokens.length - 1]
       if (!context) {
@@ -158,8 +186,95 @@ function App() {
     [temperature],
   )
 
+  const getNextTokenTrigram = useCallback(
+    (
+      baseTokens: string[],
+      activeTrigram: TrigramModel,
+      fallbackBigram: BigramModel,
+    ): string | null => {
+      const prev2 = baseTokens[baseTokens.length - 1]
+      const prev1 = baseTokens[baseTokens.length - 2]
+      if (!prev1 || !prev2) {
+        return getNextTokenBigram(baseTokens, fallbackBigram)
+      }
+      const resolvedPrev1 = activeTrigram.resolveToken(prev1)
+      const resolvedPrev2 = activeTrigram.resolveToken(prev2)
+      if (!resolvedPrev1 || !resolvedPrev2) {
+        return getNextTokenBigram(baseTokens, fallbackBigram)
+      }
+      const candidates = activeTrigram.getCandidates(resolvedPrev1, resolvedPrev2)
+      if (candidates.length === 0) {
+        return getNextTokenBigram(baseTokens, fallbackBigram)
+      }
+      if (temperature <= 0) {
+        return candidates[0].token
+      }
+      const adjusted = applyTemperature(
+        candidates.map((candidate) => ({ token: candidate.token, prob: candidate.prob })),
+        temperature,
+      )
+      const sampled = sampleCandidate(adjusted)
+      return sampled ? sampled.token : null
+    },
+    [temperature, getNextTokenBigram],
+  )
+
   const computePredictedNext = useCallback(() => {
-    if (model.isEmpty()) {
+    if (modelType === 'trigrams') {
+      setPredictedContext(null)
+      if (trigramModel.isEmpty()) {
+        setPredictedNext(null)
+        setPredictedTrigramContext(null)
+        setManualTrigramSelection(null)
+        return
+      }
+      if (!resolvedPrev1 || !resolvedPrev2) {
+        setPredictedNext(null)
+        setPredictedTrigramContext(null)
+        return
+      }
+      if (
+        manualTrigramSelection &&
+        manualTrigramSelection.prev1 === resolvedPrev1 &&
+        manualTrigramSelection.prev2 === resolvedPrev2
+      ) {
+        setPredictedNext(manualTrigramSelection.next)
+        setPredictedTrigramContext({ prev1: resolvedPrev1, prev2: resolvedPrev2 })
+        return
+      }
+      if (manualTrigramSelection) {
+        setManualTrigramSelection(null)
+      }
+      const candidates = trigramModel.getCandidates(resolvedPrev1, resolvedPrev2)
+      if (candidates.length === 0) {
+        setPredictedNext(null)
+        setPredictedTrigramContext(null)
+        return
+      }
+      if (temperature <= 0) {
+        setPredictedNext(candidates[0].token)
+        setPredictedTrigramContext({ prev1: resolvedPrev1, prev2: resolvedPrev2 })
+        return
+      }
+      const adjusted = applyTemperature(
+        candidates.map((candidate) => ({ token: candidate.token, prob: candidate.prob })),
+        temperature,
+      )
+      const sampled = sampleCandidate(adjusted)
+      setPredictedNext(sampled ? sampled.token : null)
+      setPredictedTrigramContext({ prev1: resolvedPrev1, prev2: resolvedPrev2 })
+      return
+    }
+
+    if (modelType !== 'bigrams') {
+      setPredictedNext(null)
+      setPredictedContext(null)
+      return
+    }
+
+    setPredictedTrigramContext(null)
+
+    if (bigramModel.isEmpty()) {
       setPredictedNext(null)
       setPredictedContext(null)
       setManualSelection(null)
@@ -167,7 +282,7 @@ function App() {
     }
     let context = currentToken
     if (!context) {
-      context = model.getMostCommonToken()
+      context = bigramModel.getMostCommonToken()
     }
     if (!context) {
       setPredictedNext(null)
@@ -175,7 +290,7 @@ function App() {
       setManualSelection(null)
       return
     }
-    const resolved = model.resolveToken(context) ?? model.getMostCommonToken()
+    const resolved = bigramModel.resolveToken(context) ?? bigramModel.getMostCommonToken()
     if (!resolved) {
       setPredictedNext(null)
       setPredictedContext(null)
@@ -190,7 +305,7 @@ function App() {
     if (manualSelection) {
       setManualSelection(null)
     }
-    const candidates = model.getCandidates(resolved)
+    const candidates = bigramModel.getCandidates(resolved)
     if (candidates.length === 0) {
       setPredictedNext(null)
       setPredictedContext(null)
@@ -208,7 +323,17 @@ function App() {
     const sampled = sampleCandidate(adjusted)
     setPredictedNext(sampled ? sampled.token : null)
     setPredictedContext(resolved)
-  }, [model, currentToken, temperature])
+  }, [
+    bigramModel,
+    currentToken,
+    manualSelection,
+    manualTrigramSelection,
+    modelType,
+    resolvedPrev1,
+    resolvedPrev2,
+    temperature,
+    trigramModel,
+  ])
 
   const handleBigramSelect = useCallback(
     (prev: string, next: string) => {
@@ -219,34 +344,71 @@ function App() {
     [],
   )
 
+  const handleTrigramSelect = useCallback(
+    (prev1: string, prev2: string, next: string) => {
+      setManualTrigramSelection({ prev1, prev2, next })
+      setPredictedTrigramContext({ prev1, prev2 })
+      setPredictedNext(next)
+    },
+    [],
+  )
+
   const generateOne = useCallback(() => {
-    const activeModel = ensureModel()
-    if (activeModel.isEmpty()) return
+    const models = ensureModels()
     setGeneratedTokens((prev) => {
       const baseTokens = [...seedTokens, ...prev]
-      const contextToken = baseTokens[baseTokens.length - 1]
-      const resolved = contextToken
-        ? activeModel.resolveToken(contextToken) ?? activeModel.getMostCommonToken()
-        : activeModel.getMostCommonToken()
-      const shouldUsePredicted =
-        predictedNext && predictedContext && resolved && predictedContext === resolved
-      const next = shouldUsePredicted
-        ? predictedNext
-        : getNextToken(baseTokens, activeModel)
+      const shouldUsePredicted = modelType === 'bigrams'
+      let next: string | null
+      if (shouldUsePredicted) {
+        const contextToken = baseTokens[baseTokens.length - 1]
+        const resolved = contextToken
+          ? models.bigram.resolveToken(contextToken) ?? models.bigram.getMostCommonToken()
+          : models.bigram.getMostCommonToken()
+        const usePredicted =
+          predictedNext && predictedContext && resolved && predictedContext === resolved
+        next = usePredicted
+          ? predictedNext
+          : getNextTokenBigram(baseTokens, models.bigram)
+      } else {
+        const prev2 = baseTokens[baseTokens.length - 1]
+        const prev1 = baseTokens[baseTokens.length - 2]
+        const resolvedPrev1Local = prev1 ? models.trigram.resolveToken(prev1) : null
+        const resolvedPrev2Local = prev2 ? models.trigram.resolveToken(prev2) : null
+        const usePredicted =
+          predictedNext &&
+          predictedTrigramContext &&
+          resolvedPrev1Local &&
+          resolvedPrev2Local &&
+          predictedTrigramContext.prev1 === resolvedPrev1Local &&
+          predictedTrigramContext.prev2 === resolvedPrev2Local
+        next = usePredicted
+          ? predictedNext
+          : getNextTokenTrigram(baseTokens, models.trigram, models.bigram)
+      }
       if (!next) return prev
       return [...prev, next]
     })
-  }, [ensureModel, getNextToken, predictedNext, predictedContext, seedTokens])
+  }, [
+    ensureModels,
+    getNextTokenBigram,
+    getNextTokenTrigram,
+    modelType,
+    predictedNext,
+    predictedContext,
+    predictedTrigramContext,
+    seedTokens,
+  ])
 
   const generateMany = useCallback(
     (amount: number) => {
-      const activeModel = ensureModel()
-      if (activeModel.isEmpty()) return
+      const models = ensureModels()
       const nextTokens: string[] = []
       let currentTokens = [...seedTokens, ...generatedTokens]
 
       for (let i = 0; i < amount; i += 1) {
-        const next = getNextToken(currentTokens, activeModel)
+        const next = modelType === 'trigrams'
+          ? getNextTokenTrigram(currentTokens, models.trigram, models.bigram)
+          : getNextTokenBigram(currentTokens, models.bigram)
         if (!next) break
         nextTokens.push(next)
         currentTokens = [...currentTokens, next]
@@ -256,18 +418,26 @@ function App() {
         setGeneratedTokens((prev) => [...prev, ...nextTokens])
       }
     },
-    [ensureModel, getNextToken, seedTokens, generatedTokens],
+    [
+      ensureModels,
+      getNextTokenBigram,
+      getNextTokenTrigram,
+      modelType,
+      seedTokens,
+      generatedTokens,
+    ],
   )
 
   const startAnimation = useCallback(() => {
     stopAnimation()
-    const activeModel = ensureModel()
-    if (activeModel.isEmpty()) return
+    const models = ensureModels()
     const baseSeed = [...seedTokens]
     setIsAnimating(true)
     intervalRef.current = window.setInterval(() => {
       setGeneratedTokens((prev) => {
-        const next = getNextToken([...baseSeed, ...prev], activeModel)
+        const next = modelType === 'trigrams'
+          ? getNextTokenTrigram([...baseSeed, ...prev], models.trigram, models.bigram)
+          : getNextTokenBigram([...baseSeed, ...prev], models.bigram)
         if (!next) {
           stopAnimation()
           return prev
@@ -275,7 +445,14 @@ function App() {
         return [...prev, next]
       })
     }, 200)
-  }, [ensureModel, getNextToken, seedTokens, stopAnimation])
+  }, [
+    ensureModels,
+    getNextTokenBigram,
+    getNextTokenTrigram,
+    modelType,
+    seedTokens,
+    stopAnimation,
+  ])
 
   const clearAll = useCallback(() => {
     stopAnimation()
@@ -360,9 +537,10 @@ function App() {
 
   useEffect(() => {
     computePredictedNext()
-  }, [computePredictedNext, seedText, generatedTokens, temperature, corpusText])
+  }, [computePredictedNext, seedText, generatedTokens, temperature, corpusText, modelType])
 
-  const isCorpusTrained = lastTrainedCorpus === corpusText && !model.isEmpty()
+  const isCorpusTrained =
+    lastTrainedCorpus === corpusText && !bigramModel.isEmpty() && !trigramModel.isEmpty()
 
   return (
     <div className={styles.app}>
@@ -382,7 +560,7 @@ function App() {
                 type="button"
                 onClick={() => setActiveTab('bigrams')}
               >
-                Bigrames
+                {modelType === 'trigrams' ? 'Trigrames' : 'Bigrames'}
               </button>
             </div>
             <span className={styles.sectionTitle}>Entrenament</span>
@@ -399,6 +577,16 @@ function App() {
                 onTrain={trainModel}
                 isTrained={isCorpusTrained}
                 isLoading={isLoadingCorpus}
+              />
+            ) : modelType === 'trigrams' ? (
+              <TrigramList
+                trigrams={trigrams}
+                currentPrev1={resolvedPrev1}
+                currentPrev2={resolvedPrev2}
+                predictedNext={predictedNext}
+                filterCurrentOnly={filterCurrentOnly}
+                onToggleFilter={setFilterCurrentOnly}
+                onSelectTrigram={handleTrigramSelect}
               />
             ) : (
               <BigramList

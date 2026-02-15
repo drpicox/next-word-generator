@@ -43,6 +43,7 @@ export function GeneratorControls({
           onChange={(event) => onModelChange(event.target.value)}
         >
           <option value="bigrams">Bigrames</option>
+          <option value="trigrams">Trigrames</option>
         </select>
       </div>
 
