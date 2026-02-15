@@ -2,12 +2,13 @@ import styles from './CorpusTab.module.css'
 
 type CorpusTabProps = {
   corpusText: string
-  corpusOptions: Array<{ id: string; label: string; text: string }>
+  corpusOptions: Array<{ id: string; label: string; file: string }>
   selectedCorpusId: string
   onCorpusSelect: (id: string) => void
   onCorpusChange: (value: string) => void
   onTrain: () => void
   isTrained: boolean
+  isLoading: boolean
 }
 
 export function CorpusTab({
@@ -18,6 +19,7 @@ export function CorpusTab({
   onCorpusChange,
   onTrain,
   isTrained,
+  isLoading,
 }: CorpusTabProps) {
   return (
     <div className={styles.container}>
@@ -49,9 +51,9 @@ export function CorpusTab({
           className={styles.primaryButton}
           type="button"
           onClick={onTrain}
-          disabled={isTrained}
+          disabled={isTrained || isLoading}
         >
-          {isTrained ? 'Entrenat' : 'Entrenar model'}
+          {isLoading ? 'Carregant...' : isTrained ? 'Entrenat' : 'Entrenar model'}
         </button>
       </div>
     </div>

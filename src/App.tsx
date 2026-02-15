@@ -11,23 +11,66 @@ import { BigramList } from './components/BigramList'
 import { GeneratorControls } from './components/GeneratorControls'
 import { GeneratedText } from './components/GeneratedText'
 
+type CorpusManifestItem = {
+  id: string
+  title: string
+  category: string
+  type: string
+  language: string
+  file: string
+}
+
+type CorpusOption = {
+  id: string
+  label: string
+  file: string
+  text?: string
+}
+
 const DEFAULT_CORPUS =
   'el gat està content. el gos és feliç. el gat dorm. el gos juga. el gat menja. el gos corre. el cotxe és ràpid. el cotxe va lluny.'
 
 const EXTENDED_CORPUS =
   `la pluja cau lenta. el sol surt a poc a poc. la nena llegeix un llibre. el noi escriu una carta. la ciutat dorm però el tren passa. el carrer és buit i tranquil. el vent porta olor de mar. el matí arriba amb calma. la pluja es fa fina i el vent baixa. el sol torna i la ciutat es desperta. la nena guarda el llibre i somriu. el noi llegeix la carta i respira. el tren arriba tard però passa de pressa. el carrer queda buit i el silenci dura. el mar és calmat i l'olor és dolça. la calma del matí es queda una estona.`
 
-const CORPUS_OPTIONS = [
-  { id: 'basic', label: 'Corpus bàsic', text: DEFAULT_CORPUS },
-  { id: 'extended', label: 'Corpus ampliat', text: EXTENDED_CORPUS },
-  { id: 'custom', label: 'Personalitzat', text: '' },
-]
+const BASIC_CORPUS_OPTION: CorpusOption = {
+  id: 'basic',
+  label: 'Corpus bàsic',
+  file: '',
+  text: DEFAULT_CORPUS,
+}
+
+const EXTENDED_CORPUS_OPTION: CorpusOption = {
+  id: 'extended',
+  label: 'Corpus ampliat',
+  file: '',
+  text: EXTENDED_CORPUS,
+}
+
+const CUSTOM_CORPUS_OPTION: CorpusOption = {
+  id: 'custom',
+  label: 'Personalitzat',
+  file: '',
+}
 
 const DEFAULT_TEMPERATURE = 0.7
+
+function stripFrontmatter(text: string): string {
+  const normalized = text.replace(/^\uFEFF/, '')
+  const match = normalized.match(/^\s*---\s*\n[\s\S]*?\n---\s*\n?/)
+  if (!match) return text
+  return normalized.slice(match[0].length).replace(/^\s+/, '')
+}
 
 function App() {
   const [corpusText, setCorpusText] = useState(DEFAULT_CORPUS)
   const [selectedCorpusId, setSelectedCorpusId] = useState('basic')
+  const [corpusOptions, setCorpusOptions] = useState<CorpusOption[]>([
+    BASIC_CORPUS_OPTION,
+    EXTENDED_CORPUS_OPTION,
+    CUSTOM_CORPUS_OPTION,
+  ])
+  const [isLoadingCorpus, setIsLoadingCorpus] = useState(false)
   const [lastTrainedCorpus, setLastTrainedCorpus] = useState('')
   const [model, setModel] = useState(() => new BigramModel())
   const [bigrams, setBigrams] = useState<BigramEntry[]>([])
@@ -243,22 +286,77 @@ function App() {
     setModelType('bigrams')
   }, [stopAnimation])
 
-  const handleCorpusChange = useCallback((value: string) => {
-    setSelectedCorpusId('custom')
-    setCorpusText(value)
-  }, [])
-
-  const handleCorpusSelect = useCallback((id: string) => {
-    setSelectedCorpusId(id)
-    const selected = CORPUS_OPTIONS.find((option) => option.id === id)
-    if (selected && selected.id !== 'custom') {
-      setCorpusText(selected.text)
+  const loadCorpusText = useCallback(async (option: CorpusOption) => {
+    if (option.text) {
+      setCorpusText(stripFrontmatter(option.text))
+      return
+    }
+    if (!option.file) return
+    try {
+      setIsLoadingCorpus(true)
+      const response = await fetch(`/texts/${option.file}`)
+      if (!response.ok) throw new Error('Failed to load corpus')
+      const text = await response.text()
+      setCorpusText(stripFrontmatter(text))
+    } catch {
+      setCorpusText('')
+    } finally {
+      setIsLoadingCorpus(false)
     }
   }, [])
+
+  const handleCorpusChange = useCallback((value: string) => {
+    setSelectedCorpusId('custom')
+    setCorpusText(stripFrontmatter(value))
+  }, [])
+
+  const handleCorpusSelect = useCallback(
+    (id: string) => {
+      setSelectedCorpusId(id)
+      if (id === 'custom') return
+      const selected = corpusOptions.find((option) => option.id === id)
+      if (selected) {
+        void loadCorpusText(selected)
+      }
+    },
+    [corpusOptions, loadCorpusText],
+  )
+
+  const loadManifest = useCallback(async () => {
+    try {
+      const response = await fetch('/texts/manifest.json')
+      if (!response.ok) throw new Error('Failed to load manifest')
+      const data = (await response.json()) as { texts: CorpusManifestItem[] }
+      const options = data.texts
+        .filter((item) => item.language === 'ca')
+        .map((item) => ({
+        id: item.id,
+          label: `${item.category} > ${item.title}`,
+        file: item.file,
+      }))
+      const withCustom = [
+        BASIC_CORPUS_OPTION,
+        EXTENDED_CORPUS_OPTION,
+        ...options,
+        CUSTOM_CORPUS_OPTION,
+      ]
+      setCorpusOptions(withCustom)
+      if (!selectedCorpusId) {
+        setSelectedCorpusId(BASIC_CORPUS_OPTION.id)
+        void loadCorpusText(BASIC_CORPUS_OPTION)
+      }
+    } catch {
+      setCorpusOptions([BASIC_CORPUS_OPTION, EXTENDED_CORPUS_OPTION, CUSTOM_CORPUS_OPTION])
+    }
+  }, [loadCorpusText, selectedCorpusId])
 
   useEffect(() => {
     return () => stopAnimation()
   }, [stopAnimation])
+
+  useEffect(() => {
+    void loadManifest()
+  }, [loadManifest])
 
   useEffect(() => {
     computePredictedNext()
@@ -294,12 +392,13 @@ function App() {
             {activeTab === 'corpus' ? (
               <CorpusTab
                 corpusText={corpusText}
-                corpusOptions={CORPUS_OPTIONS}
+                corpusOptions={corpusOptions}
                 selectedCorpusId={selectedCorpusId}
                 onCorpusSelect={handleCorpusSelect}
                 onCorpusChange={handleCorpusChange}
                 onTrain={trainModel}
                 isTrained={isCorpusTrained}
+                isLoading={isLoadingCorpus}
               />
             ) : (
               <BigramList

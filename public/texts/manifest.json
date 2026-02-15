@@ -1,0 +1,140 @@
+{
+  "texts": [
+    {
+      "id": "patufet",
+      "title": "En Patufet",
+      "category": "Rondalles",
+      "type": "rondalla",
+      "language": "ca",
+      "file": "rondalles/patufet.txt"
+    },
+    {
+      "id": "patufet-3yo",
+      "title": "En Patufet (3 anys)",
+      "category": "Rondalles",
+      "type": "rondalla",
+      "language": "ca",
+      "file": "rondalles/patufet-3yo.txt"
+    },
+    {
+      "id": "patufet-simple",
+      "title": "En Patufet (senzill)",
+      "category": "Rondalles",
+      "type": "rondalla",
+      "language": "ca",
+      "file": "rondalles/patufet-simple.txt"
+    },
+    {
+      "id": "espigueta",
+      "title": "L'Espigueta de Mill",
+      "category": "Rondalles",
+      "type": "rondalla",
+      "language": "ca",
+      "file": "rondalles/espigueta.txt"
+    },
+    {
+      "id": "fillacarboner",
+      "title": "La Filla del Carboner",
+      "category": "Rondalles",
+      "type": "rondalla",
+      "language": "ca",
+      "file": "rondalles/filla-carboner.txt"
+    },
+    {
+      "id": "perepocapor",
+      "title": "En Pere Poca Por",
+      "category": "Rondalles",
+      "type": "rondalla",
+      "language": "ca",
+      "file": "rondalles/pere-poca-por.txt"
+    },
+    {
+      "id": "santjordi",
+      "title": "Sant Jordi i el drac",
+      "category": "Llegendes",
+      "type": "llegenda",
+      "language": "ca",
+      "file": "llegendes/sant-jordi-drac.txt"
+    },
+    {
+      "id": "santjordi-auria",
+      "title": "Llegenda Àuria de Sant Jordi",
+      "category": "Llegendes",
+      "type": "llegenda",
+      "language": "ca",
+      "file": "llegendes/llegenda-auria.txt"
+    },
+    {
+      "id": "sopapedra",
+      "title": "La Sopa de pedra",
+      "category": "Rondalles",
+      "type": "rondalla",
+      "language": "ca",
+      "file": "rondalles/sopa-pedra.txt"
+    },
+    {
+      "id": "parenostre",
+      "title": "El Parenostre",
+      "category": "Pregaries",
+      "type": "pregaria",
+      "language": "ca",
+      "file": "pregaries/parenostre.txt"
+    },
+    {
+      "id": "refranys",
+      "title": "Refranys Catalans",
+      "category": "Refranys",
+      "type": "refranys",
+      "language": "ca",
+      "file": "refranys/refranys.txt"
+    },
+    {
+      "id": "starwars",
+      "title": "Star Wars: The Empire Strikes Back",
+      "category": "Guions",
+      "type": "screenplay",
+      "language": "en",
+      "file": "guions/star-wars-empire.en.txt"
+    },
+    {
+      "id": "starwars-ca",
+      "title": "Star Wars: L'Imperi Contraataca",
+      "category": "Guions",
+      "type": "screenplay",
+      "language": "ca",
+      "file": "guions/star-wars-empire.ca.txt"
+    },
+    {
+      "id": "princessbride",
+      "title": "The Princess Bride",
+      "category": "Guions",
+      "type": "screenplay",
+      "language": "en",
+      "file": "guions/princess-bride.en.txt"
+    },
+    {
+      "id": "princessbride-ca",
+      "title": "La Princesa Promesa",
+      "category": "Guions",
+      "type": "screenplay",
+      "language": "ca",
+      "file": "guions/princess-bride.ca.txt"
+    },
+    {
+      "id": "wizardofoz",
+      "title": "The Wizard of Oz",
+      "category": "Guions",
+      "type": "screenplay",
+      "language": "en",
+      "file": "guions/wizard-of-oz.en.txt"
+    },
+    {
+      "id": "wizardofoz-ca",
+      "title": "El Mag d'Oz",
+      "category": "Guions",
+      "type": "screenplay",
+      "language": "ca",
+      "file": "guions/wizard-of-oz.ca.txt"
+    }
+  ]
+}
