@@ -15,7 +15,7 @@ const DEFAULT_CORPUS =
   'el gat està content. el gos és feliç. el gat dorm. el gos juga. el gat menja. el gos corre. el cotxe és ràpid. el cotxe va lluny.'
 
 const EXTENDED_CORPUS =
-  'la pluja cau lenta. el sol surt a poc a poc. la nena llegeix un llibre. el noi escriu una carta. la ciutat dorm però el tren passa. el carrer és buit i tranquil. el vent porta olor de mar. el matí arriba amb calma. la pluja es fa fina i el vent baixa. el sol torna i la ciutat es desperta. la nena guarda el llibre i somriu. el noi llegeix la carta i respira. el tren arriba tard però passa de pressa. el carrer queda buit i el silenci dura. el mar és calmat i l\'olor és dolça. la calma del matí es queda una estona.'
+  `la pluja cau lenta. el sol surt a poc a poc. la nena llegeix un llibre. el noi escriu una carta. la ciutat dorm però el tren passa. el carrer és buit i tranquil. el vent porta olor de mar. el matí arriba amb calma. la pluja es fa fina i el vent baixa. el sol torna i la ciutat es desperta. la nena guarda el llibre i somriu. el noi llegeix la carta i respira. el tren arriba tard però passa de pressa. el carrer queda buit i el silenci dura. el mar és calmat i l'olor és dolça. la calma del matí es queda una estona.`
 
 const CORPUS_OPTIONS = [
   { id: 'basic', label: 'Corpus bàsic', text: DEFAULT_CORPUS },
