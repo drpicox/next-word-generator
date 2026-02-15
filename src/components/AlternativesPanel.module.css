@@ -1,0 +1,42 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.prob {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.barTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 123, 108, 0.15);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-warm));
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
