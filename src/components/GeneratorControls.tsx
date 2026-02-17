@@ -44,6 +44,7 @@ export function GeneratorControls({
         >
           <option value="bigrams">Bigrames</option>
           <option value="trigrams">Trigrames</option>
+          <option value="tetragrams">Tetragrames</option>
         </select>
       </div>
 

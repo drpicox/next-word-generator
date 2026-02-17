@@ -1,6 +1,7 @@
 import { normalizeText } from '../utils/normalize'
 import { tokenize } from '../utils/tokenize'
 import { findClosestToken } from '../utils/similarity'
+import { levenshtein } from '../utils/levenshtein'
 
 export type TrigramCandidate = {
   token: string
@@ -93,6 +94,43 @@ export class TrigramModel {
       candidates.push({ token, count, prob: count / total })
     }
     return candidates.sort((a, b) => b.prob - a.prob)
+  }
+
+  getCandidatesForContext(prev1: string, prev2: string): {
+    prev1: string
+    prev2: string
+    candidates: TrigramCandidate[]
+  } | null {
+    if (this.counts.size === 0) return null
+    const exactCandidates = this.getCandidates(prev1, prev2)
+    if (exactCandidates.length > 0) {
+      return { prev1, prev2, candidates: exactCandidates }
+    }
+
+    const closest = this.findClosestContext(prev1, prev2)
+    if (!closest) return null
+    const candidates = this.getCandidates(closest.prev1, closest.prev2)
+    if (candidates.length === 0) return null
+    return { prev1: closest.prev1, prev2: closest.prev2, candidates }
+  }
+
+  private findClosestContext(prev1: string, prev2: string): {
+    prev1: string
+    prev2: string
+  } | null {
+    let best: { prev1: string; prev2: string } | null = null
+    let bestScore = Number.POSITIVE_INFINITY
+    for (const [key1, secondMap] of this.counts.entries()) {
+      for (const key2 of secondMap.keys()) {
+        const score = levenshtein(prev1, key1) + levenshtein(prev2, key2)
+        if (score < bestScore) {
+          bestScore = score
+          best = { prev1: key1, prev2: key2 }
+        }
+        if (bestScore === 0) return best
+      }
+    }
+    return best
   }
 
   getAllTrigrams(): TrigramEntry[] {

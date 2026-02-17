@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.fragment {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+}
+
+.token {
+  white-space: pre-wrap;
+}
+
+.context {
+  background: rgba(15, 123, 108, 0.18);
+  border-radius: 6px;
+  padding: 0 4px;
+}
+
+.next {
+  background: rgba(199, 107, 46, 0.22);
+  border-radius: 6px;
+  padding: 0 4px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
