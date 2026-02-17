@@ -59,6 +59,31 @@
   margin-bottom: 12px;
 }
 
+.panelHeaderControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.presentationToggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.presentationToggleActive {
+  background: var(--accent);
+  color: white;
+  border-color: transparent;
+}
+
 .panelBody {
   display: flex;
   flex-direction: column;

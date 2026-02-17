@@ -859,32 +859,46 @@ function App() {
       <div className={styles.layout}>
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
-            <div className={styles.tabs}>
+            <div className={styles.panelHeaderControls}>
               <button
-                className={`${styles.tabButton} ${activeTab === 'corpus' ? styles.tabButtonActive : ''}`}
+                className={`${styles.presentationToggle} ${isPresentationMode ? styles.presentationToggleActive : ''}`}
                 type="button"
-                onClick={() => setActiveTab('corpus')}
+                aria-label="Mode presentacio"
+                aria-pressed={isPresentationMode}
+                title="Mode presentacio"
+                onClick={() => setIsPresentationMode((prev) => !prev)}
               >
-                Corpus
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                  <path d="M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm0-2a8 8 0 1 0 5.32 14.02l4.33 4.33a1 1 0 0 0 1.42-1.42l-4.33-4.33A8 8 0 0 0 10 2z" />
+                </svg>
               </button>
-              <button
-                className={`${styles.tabButton} ${activeTab === 'bigrams' ? styles.tabButtonActive : ''}`}
-                type="button"
-                onClick={() => setActiveTab('bigrams')}
-              >
-                {modelType === 'tetragrams'
-                  ? 'Tetragrames'
-                  : modelType === 'trigrams'
-                    ? 'Trigrames'
-                    : 'Bigrames'}
-              </button>
-              <button
-                className={`${styles.tabButton} ${activeTab === 'context' ? styles.tabButtonActive : ''}`}
-                type="button"
-                onClick={() => setActiveTab('context')}
-              >
-                Context
-              </button>
+              <div className={styles.tabs}>
+                <button
+                  className={`${styles.tabButton} ${activeTab === 'corpus' ? styles.tabButtonActive : ''}`}
+                  type="button"
+                  onClick={() => setActiveTab('corpus')}
+                >
+                  Corpus
+                </button>
+                <button
+                  className={`${styles.tabButton} ${activeTab === 'bigrams' ? styles.tabButtonActive : ''}`}
+                  type="button"
+                  onClick={() => setActiveTab('bigrams')}
+                >
+                  {modelType === 'tetragrams'
+                    ? 'Tetragrames'
+                    : modelType === 'trigrams'
+                      ? 'Trigrames'
+                      : 'Bigrames'}
+                </button>
+                <button
+                  className={`${styles.tabButton} ${activeTab === 'context' ? styles.tabButtonActive : ''}`}
+                  type="button"
+                  onClick={() => setActiveTab('context')}
+                >
+                  Context
+                </button>
+              </div>
             </div>
             <span className={styles.sectionTitle}>Entrenament</span>
           </div>
@@ -944,7 +958,6 @@ function App() {
             seedText={seedText}
             temperature={temperature}
             isAnimating={isAnimating}
-            isPresentationMode={isPresentationMode}
             onModelChange={setModelType}
             onSeedChange={handleSeedChange}
             onTemperatureChange={setTemperature}
@@ -954,7 +967,6 @@ function App() {
             onStep={generateOne}
             onStop={stopAnimation}
             onClear={clearAll}
-            onTogglePresentation={() => setIsPresentationMode((prev) => !prev)}
           />
 
           <div className={styles.generatedSection}>

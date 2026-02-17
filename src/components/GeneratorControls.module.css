@@ -77,12 +77,6 @@
   color: white;
 }
 
-.buttonActive {
-  background: var(--accent);
-  color: white;
-  border-color: transparent;
-}
-
 .buttonWarm {
   background: rgba(199, 107, 46, 0.2);
   color: #7a3e15;

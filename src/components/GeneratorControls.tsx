@@ -5,7 +5,6 @@ type GeneratorControlsProps = {
   seedText: string
   temperature: number
   isAnimating: boolean
-  isPresentationMode: boolean
   onModelChange: (value: string) => void
   onSeedChange: (value: string) => void
   onTemperatureChange: (value: number) => void
@@ -15,7 +14,6 @@ type GeneratorControlsProps = {
   onStep: () => void
   onStop: () => void
   onClear: () => void
-  onTogglePresentation: () => void
 }
 
 export function GeneratorControls({
@@ -23,7 +21,6 @@ export function GeneratorControls({
   seedText,
   temperature,
   isAnimating,
-  isPresentationMode,
   onModelChange,
   onSeedChange,
   onTemperatureChange,
@@ -33,7 +30,6 @@ export function GeneratorControls({
   onStep,
   onStop,
   onClear,
-  onTogglePresentation,
 }: GeneratorControlsProps) {
   return (
     <div className={styles.container}>
@@ -127,19 +123,6 @@ export function GeneratorControls({
           onClick={onClear}
         >
           Esborrar
-        </button>
-      </div>
-
-      <div className={styles.field}>
-        <div className={styles.labelRow}>
-          <span>Mode presentacio</span>
-        </div>
-        <button
-          className={`${styles.button} ${styles.buttonGhost} ${isPresentationMode ? styles.buttonActive : ''}`}
-          type="button"
-          onClick={onTogglePresentation}
-        >
-          {isPresentationMode ? 'Desactivar' : 'Activar'}
         </button>
       </div>
     </div>
