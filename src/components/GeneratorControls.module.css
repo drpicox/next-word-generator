@@ -34,10 +34,11 @@
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
+  font-size: calc(0.95rem * var(--font-scale, 1));
 }
 
 .textarea {
-  min-height: 110px;
+  min-height: 84px;
   resize: vertical;
 }
 
