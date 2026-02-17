@@ -4,6 +4,11 @@
   padding: 32px 28px 40px;
   display: flex;
   flex-direction: column;
+  font-size: calc(1rem * var(--font-scale, 1));
+}
+
+.presentation {
+  --font-scale: 1.2;
 }
 
 .header {
@@ -15,7 +20,11 @@
 }
 
 .title {
-  font-size: clamp(2rem, 3vw, 3rem);
+  font-size: clamp(
+    calc(2rem * var(--font-scale, 1)),
+    3vw,
+    calc(3rem * var(--font-scale, 1))
+  );
   margin: 0;
 }
 
@@ -81,7 +90,7 @@
 }
 
 .sectionTitle {
-  font-size: 1rem;
+  font-size: calc(1rem * var(--font-scale, 1));
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);

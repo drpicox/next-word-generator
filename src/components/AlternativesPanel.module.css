@@ -20,7 +20,7 @@
 
 .prob {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--font-scale, 1));
   font-variant-numeric: tabular-nums;
 }
 
@@ -38,5 +38,5 @@
 
 .empty {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--font-scale, 1));
 }

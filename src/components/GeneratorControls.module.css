@@ -15,7 +15,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--font-scale, 1));
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -75,6 +75,12 @@
 .buttonPrimary {
   background: var(--accent);
   color: white;
+}
+
+.buttonActive {
+  background: var(--accent);
+  color: white;
+  border-color: transparent;
 }
 
 .buttonWarm {

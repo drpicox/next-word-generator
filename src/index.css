@@ -1,6 +1,7 @@
 :root {
   --font-display: "Palatino Linotype", "Book Antiqua", Palatino, "Times New Roman", serif;
   --font-body: "Trebuchet MS", "Lucida Grande", "Segoe UI", sans-serif;
+  --font-scale: 1;
   --bg: #f6f0e8;
   --ink: #1f2024;
   --muted: #6c6f7a;

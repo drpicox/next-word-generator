@@ -18,7 +18,17 @@
   align-items: center;
   gap: 8px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--font-scale, 1));
+}
+
+.summary {
+  font-size: calc(0.9rem * var(--font-scale, 1));
+  color: var(--muted);
+}
+
+.listHeader {
+  font-size: calc(0.92rem * var(--font-scale, 1));
+  color: var(--muted);
 }
 
 .list {
@@ -39,7 +49,7 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid transparent;
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--font-scale, 1));
 }
 
 .highlight {

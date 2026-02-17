@@ -154,6 +154,7 @@ function App() {
     prev2: string
     prev3: string
   } | null>(null)
+  const [isPresentationMode, setIsPresentationMode] = useState(false)
   const [manualSelection, setManualSelection] = useState<{
     context: string
     next: string
@@ -854,7 +855,7 @@ function App() {
   }, [modelType, resolvedTetPrev1, resolvedTetPrev2, resolvedTetPrev3, tetragramModel])
 
   return (
-    <div className={styles.app}>
+    <div className={`${styles.app} ${isPresentationMode ? styles.presentation : ''}`}>
       <div className={styles.layout}>
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
@@ -943,6 +944,7 @@ function App() {
             seedText={seedText}
             temperature={temperature}
             isAnimating={isAnimating}
+            isPresentationMode={isPresentationMode}
             onModelChange={setModelType}
             onSeedChange={handleSeedChange}
             onTemperatureChange={setTemperature}
@@ -952,6 +954,7 @@ function App() {
             onStep={generateOne}
             onStop={stopAnimation}
             onClear={clearAll}
+            onTogglePresentation={() => setIsPresentationMode((prev) => !prev)}
           />
 
           <div className={styles.generatedSection}>

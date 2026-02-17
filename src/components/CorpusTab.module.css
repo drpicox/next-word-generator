@@ -18,7 +18,7 @@
   border: 1px solid var(--panel-border);
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--font-scale, 1));
 }
 
 .selectRow {
@@ -28,7 +28,7 @@
 }
 
 .selectLabel {
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--font-scale, 1));
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
