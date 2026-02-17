@@ -12,6 +12,11 @@ Petit prototipus d'un generador de text tipus LLM, basat en bigrames. Entrena am
 - `npm install`
 - `npm run dev`
 - `npm run build`
+- `npm run deploy`
+
+## GitHub Pages
+- La base de Vite es `/next-word-generator/`.
+- Per publicar: `npm run deploy` (genera `dist/` i fa push a la branca `gh-pages`).
 
 ## Notes
 - La normalitzacio passa a minuscules i tokenitza paraules i signes de puntuacio.
